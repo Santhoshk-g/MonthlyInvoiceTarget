@@ -1,0 +1,163 @@
+<template>
+    <div class="slds-page-header">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure" style="padding-top:.4rem;">
+                        <span>
+                            <lightning-icon icon-name="standard:budget_category_value" ></lightning-icon>
+
+                            <span class="slds-assistive-text"></span>
+                        </span>
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title">
+                                <h1>
+                                    <span class="slds-page-header__title slds-truncate">CN Calculation</span>
+                                </h1>
+                            </div>
+                        </div>
+                        <p class="slds-page-header__name-meta">Set Monthly Invoice Agreed Rate.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <lightning-card>
+
+
+       <lightning-layout>
+        <lightning-combobox name="Region__c" label="Region"
+                    value={selectedRegion} placeholder="Select Region" 
+                    required="true" onchange={handleregionChange} class="slds-p-around_medium"
+                    options={regionOptions}></lightning-combobox>
+             <lightning-combobox name="Segment__c" label="Segment"
+                    value={selectedSegment} placeholder="Select Segment"
+                    required="true" onchange={handlesegmentChange} class="slds-p-around_medium"
+                    options={segmentOptions}></lightning-combobox>
+           <lightning-combobox label="Year" value={Year} class="slds-p-around_medium" required="true"
+                        options={YearValues} onchange={handleyearChange}>
+                    </lightning-combobox>
+            
+             <lightning-combobox label="Month" value={Month} class="slds-p-around_medium" required="true"
+                        options={MonthValues} onchange={handleMonthChange}>
+                    </lightning-combobox>
+            
+            <div style="padding-top:39px;">
+                <lightning-button label="Submit" variant="brand-outline" class="slds-p-around_medium"  icon-name="utility:save"
+                            onclick={submit}></lightning-button>
+                </div>
+            
+            
+            <div style="padding-top:39px;">
+                                      
+                        <lightning-button label="Upload" variant="brand-outline" icon-name="utility:upload" class="slds-p-around_medium" 
+                           onclick={handelupload} ></lightning-button>
+                    
+                
+            </div>
+            <div style="padding-top:39px;" if:true={showtable}>
+                
+                        <lightning-button label="Download" variant="brand-outline" icon-name="utility:download" class="slds-p-around_medium"
+                                     onclick={exportData}  ></lightning-button>
+                        
+                
+                
+            </div>
+            </lightning-layout>
+            <div class="slds-text-color_destructive" style="margin-left: 3%">
+                <b>{error}</b>
+            </div>
+            <template if:true={loaded}>
+                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+            </template>
+            <template if:true={showtable}>
+            <table class="slds-table slds-table_cell-buffer slds-no-row-hover slds-table_bordered">
+                <thead>
+                    <tr>
+                        <th>Customer Code</th>
+                        <th>Customer Name</th>
+                        <th>Invoice No</th>
+                        <th>Line Item</th>
+                        <th>Product</th>
+                        <th>Thickness</th>
+                        <th>Tonnage</th>
+                        <th>Invoice Value</th>
+                        <th>Invoice rate</th>
+                        <th>Aggreed Rate</th>
+                        <th>Difference</th>
+                        <th>CN Value</th>
+                    </tr>
+
+                </thead>
+                <tbody>
+                    <template for:each={recordsToDisplay} for:item="invoice">
+                        <tr key={invoice.id}>
+                            <td>{invoice.Customer_code__c}</td>
+                            <td>{invoice.Customer_Name__c}</td>
+                            <td>{invoice.Name}</td>
+                            <td>{invoice.Invoice_Line_Item_No__c}</td>
+                            <td>{invoice.ProductName}</td>
+                            <td>{invoice.Thickness__c}</td>
+                            <td>{invoice.Item_Tonnage__c}</td>
+                            <td>{invoice.Invoice_Value__c}</td>
+                            <td>{invoice.Invoice_Rate__c}</td>
+                            <td>{invoice.Agreed_Rate__c}</td>
+                            <td>{invoice.Difference__c}</td>
+                            <td>{invoice.CN_Value__c}</td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <div class="slds-align_absolute-center" style="height:5rem">
+                <lightning-button disabled={bDisableFirst} icon-name="utility:left" variant="brand-outline" label="Previous" alternative-text="Previous" onclick={previousPage}></lightning-button>
+                     &nbsp;&nbsp;
+                     <span class="slds-badge">Showing {pageNumber} &nbsp;of&nbsp; {totalPages} &nbsp;&nbsp;Pages</span>
+                     
+                     <lightning-button disabled={bDisableLast} icon-name="utility:right" variant="brand-outline" label="Next" alternative-text="Next" onclick={nextPage} class="slds-p-horizontal_x-small" icon-position="right"></lightning-button>
+           </div>
+        </template>
+    
+        </lightning-card>
+        <template if:true={isfilter} >
+
+            <!--
+                I Used SLDS for this code
+                Here is link https://www.lightningdesignsystem.com/components/modals/
+            --> 
+        
+        <section role="dialog"  class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">
+        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={hideModalBox}>
+          <lightning-icon icon-name="utility:close"
+                          alternative-text="close"
+                          variant="inverse"
+                          size="small" ></lightning-icon>
+          <span class="slds-assistive-text">Close</span>
+        </button>
+        
+          <!-- modal body start -->
+          <lightning-card title="File Upload" >
+            <div style="margin-left: 3%">
+                         <lightning-file-upload accept={acceptedCSVFormats} 
+                                                label="Upload file as .csv format" 
+                                                multiple="multiple" 
+                                                onuploadfinished={uploadFileHandler} 
+                                                record-id={recordId}></lightning-file-upload>
+         
+            </div>
+        
+          <!-- modal footer start-->
+          &nbsp;&nbsp;
+          <footer class="slds-modal__footer">
+            <button class="slds-button slds-button_brand" onclick={Done}>Done</button>
+            
+          </footer>
+        </lightning-card>
+        </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+        
+        </template>
+</template>
